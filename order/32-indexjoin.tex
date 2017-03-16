@@ -1,0 +1,166 @@
+\section{Indexjoin алгоритм}
+
+\textbf{Indexjoin алгоритм} - алгоритм, для определения индексов, которые могут быть использованы СУБД для оптимизации выполнения sql запроса. Алгоритм на вход принимает join-запрос и возвращает множество пар индексов. В каждой паре первый индекс - индекс для первой таблицы, второй индекс - индекс для второй таблицы. Если в индексе нет полей, значит по таблице не нужно строить индекс. Лучшая из множества пар индексов выбирается по селективности, исходя из данных, которыми заполнены таблицы БД.
+
+Введем некоторые обозначения:
+\begin{enumerate}
+\item $index(t)$ - индекс-множество для таблицы t, под которым подразумевается конечное множество индексов. Например, если $index(t) = t(a, b, c’, d, e)$, то $index(t) = {t(a, b, c, d, e), t(b, a, c, d, e), t(a, b, c, e, d), t(b, a, c, e, d)}$. Апостроф означает фиксированное поле в индексе. Нефиксированные поля можно менять местами только между фиксированными полями, началом и концом;
+
+\item $[joinFields] \gets getJoinFields(query)$ - получить поля, по которым происходит соединение таблиц по sql-запросу $query$;
+
+\item $index(T) \gets deleteFieldsFromIndex(index(T), [fields])$ - из $index(T)$  удалить поля, перечисленные в массиве $fields$;
+
+\item  $[(x, y)] \gets cartesianProduct(X, Y)$ - Из пар индекс-множеств (X, Y) через прямое произведение множеств X, Y получить всевозможные пары индексов (x, y);
+
+\item $index(T) \gets createIndexSet(query)$ - построить индекс-множество  по sql-запросу $query$.
+\end{enumerate}
+
+В качестве indexjoin алгоритма для join-запроса можно предложить алгоритм, при работе которого происходит анализ исследуемого запроса. Псевдокод представлена в алгоритме \ref{alg:indexjoin}. Блок-схема представлена на рисунке \ref{img:indexjoin}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.5]{indexjoin.png}
+  \caption{Блок-схема indexjoin алгоритма.}
+  \label{img:indexjoin}
+\end{figure}
+
+\begin{algorithm}[h]
+\caption{Indexjoin алгоритм}\label{alg:indexjoin}
+\begin{algorithmic}[1]
+ 
+\Function{indexjoinAlg}{query}
+
+    \State $T \gets \Call{fullscanAlg}{query}$
+    \Statex 
+    
+    \Comment{---begin block1---}
+    \If {$T \neq null$}
+        \State {$query1 \gets query$ отбросив в блоке сортировки поля, идущие после начальных полей таблицы T}
+    \Else
+        \State {$query1 \gets query$}
+    \EndIf
+    \Comment{---end block1---}
+    \Statex 
+
+    \Comment{---begin block2---}
+    \State $query21 \gets query1$ без полей таблицы $t2$, при этом в условии соединения поля таблицы $t2$ заменить на $const$
+    \Statex
+
+    \State $query22 \gets query1$ без полей таблицы $t1$, при этом в условии соединения поля таблицы $t1$ заменить на $const$
+    \Comment{---end block2---}
+    \Statex
+
+    \State $index(t1) \gets createIndexSet(query21)$
+    \State $index(t2) \gets createIndexSet(query22)$
+    \State {$joinFields \gets getJoinFields(query)$}
+    \Statex
+
+    \Comment{---begin block3---}
+    \If {$T \neq null$}
+        \State {$index(T) \gets deleteFieldsFromIndex(index(T), joinFields)$}
+        \Statex
+
+        \State \Return $cartesianProduct(index(t1), index(t2))$
+    \EndIf
+    \Comment{---end block3---}
+    \Statex
+
+    \Statex\Comment{---begin block4---}
+    \State {$index1(t1) \gets index(t1)$}
+    \State {$index2(t2) \gets deleteFieldsFromIndex(index(t2), joinFields)$}
+    \State {$index1(t2) \gets index(t2)$}
+    \State {$index2(t1) \gets deleteFieldsFromIndex(index(t1), joinFields)$}
+    \Statex\Comment{---end block4---}
+
+    \State \Return $cartesianProduct(index1(t1), index2(t2)), cartesianProduct(index1(t2), index2(t1))$
+\EndFunction
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Примеры для участков кода indexjoinAlg}
+
+$block1$: пусть $T = t2$, $query = \{\ldots ORDER BY t2.z, t2.y, t1.z, t1.y, t2.x \ldots\}$, тогда $query1 = \{\ldots ORDER BY t2.z, t2.y \ldots\}$
+
+$block1$: пусть $T = t2$,  $query = \{\ldots ORDER BY t1.x, t2.x \ldots\}$ , тогда отбрасываются все поля (т.е. в $query1$ не будет сортировки)
+
+$block2$: пусть $query1 = \{\ldots ON t1.a = t2.a WHERE t1.b = Z, t2.b = Y \ldots\}$, тогда $query21 = \{\ldots ON t1.a = const1 WHERE t1.b = Z \ldots\}$
+
+$block3$: пусть $T = t1$, $index(t1) = t1(a, b)$, $index(t2) = t2(c, a)$, $query0 = \{\ldots ON t1.a = t2.a \ldots\}$, тогда $index(t1) = t1(b)$, $index(t2) = t2(c, a)$
+
+$block4$: пусть $index(t1) = t1(a, b, c)$, $index(t2) = t2(a, b, c)$, $query1 = \{\ldots ON t1.a = t2.a \ldots\}$, тогда $ index1(t1) = t1(a, b, c)$, $index2(t2) = t2(b, c)$, $index2(t1) = t1(b, c)$, $index1(t2) = t2(a, b, c)$
+
+\subsection{Примеры работы алгоритма}
+
+Рассмотрим работу indexjoin алгоритма по обработке заданного SQL запроса на конкретных практических примерах.
+
+\paragraph{Пример №1}
+\begin{lstlisting}[language=SQL]
+query = {t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
+\end{lstlisting}
+$$ T \gets null $$
+$$ query1 \gets query $$
+$$ query21 \gets {ON t1.a = const WHERE t1.b > 1} $$
+$$ query22 \gets {ON t2.a = const WHERE t2.c = 5} $$
+$$ index(t1) \gets t1(a, b’) $$
+$$ index(t2) \gets t2(a, c) $$
+$$ index1(t1) \gets t1(a, b’) $$
+$$ index2(t2) \gets t2(c) $$
+$$ index1(t1) \gets t1(b) $$
+$$ index2(t2) \gets t2(a, c) $$
+$$ (t1(a, b’), t2(c)) \equiv {(t1(a, b), t2(c))} $$
+$$ (t1(b), t2(a, c)) \equiv {(t1(b), t2(a, c)), (t1(b), t2(c, a))} $$
+
+\textbf{Ответ:}  ${(t1(a, b), t2(c)), (t1(b), t2(a, c)), (t1(b), t2(c, a))}$ - множество пар индексов, наиболее подходящих данному запросу. 
+
+
+\paragraph{Пример №2}
+\begin{lstlisting}[language=SQL]
+query = {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c, t2.d}
+\end{lstlisting}
+$$ T \gets t1 $$
+$$ query1 \gets {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3} $$
+$$ query21 \gets {ON t1.a = const WHERE t1.b = 5000 AND t1.c > 3} $$
+$$ query22 \gets {ON t2.a = const} $$
+$$ index(t1) \gets t1(a, b, c’) $$
+$$ index(t2) \gets t2(a) $$
+$$ index(t1) \gets t1(b, c’) $$
+$$ index(t2) \gets t2(a) $$
+$$ (t1(b, c’), t2(a)) \equiv {(t1(b, c), t2(a))} $$
+
+\textbf{Ответ:} ${(t1(b, c), t2(a))}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+\paragraph{Пример №3}
+\begin{lstlisting}[language=SQL]
+query = {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d}
+\end{lstlisting}
+$$ T \gets t2 $$
+$$ query1 \gets query $$
+$$ query21 \gets {ON t1.a = const} $$
+$$ query22 \gets {ON t2.a = const WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d} $$
+$$ index(t1) \gets t1(a) $$
+$$ index(t2) \gets t2(a, b, c’, d’) $$
+$$ index(t1) \gets t1(a) $$
+$$ index(t2) \gets t2(b, c', d’) $$
+$$ (t1(a), t2(b, c’, d’)) \equiv {(t1(a), t2(b, c, d))} $$
+
+\textbf{Ответ:} ${(t1(a), t2(b, c, d))}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+\paragraph{Пример №4}
+\begin{lstlisting}[language=SQL]
+query = {FROM t1 LEFT JOIN t2 ON t2.a = t1.a ORDER BY t2.b}
+\end{lstlisting}
+$$ T \gets t1 $$
+$$ query1 \gets {t1 LEFT JOIN t2 ON t2.a = t1.a} $$
+$$ query21 \gets {ON t1.a = const} $$
+$$ query22 \gets {ON t2.a = const} $$
+$$ index(t1) \gets t1(a) $$
+$$ index(t2) \gets t2(a) $$
+$$ index(t1) \gets t1() $$
+$$ index(t2) \gets t2(a) $$
+$$ (t1(), t2(a)) \equiv {(t1(), t2(a))} $$
+
+\textbf{Ответ:} ${(t1(), t2(a))}$ - множество пар индексов, наиболее подходящих данному запросу.

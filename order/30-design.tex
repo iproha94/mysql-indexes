@@ -1,0 +1,13 @@
+\chapter{Конструкторский раздел}
+
+Под \textbf{join-запросами} будем понимать запросы, вида листинг \ref{view-sql-query}.
+
+\begin{lstlisting}[language=sql, caption={Вид sql запроса},label=view-sql-query]
+t1 {INNER | LEFT | RIGHT} JOIN t2
+    ON conditional_expr
+    [WHERE where_definition]
+    [ORDER BY col_name [ASC | DESC], ...]
+\end{lstlisting}
+
+\input{31-fullscan}
+\input{32-indexjoin}
