@@ -59,12 +59,12 @@
 \paragraph{Пример №1}
 
 \begin{lstlisting}[language=SQL]
-query = {t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
+query = {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
 \end{lstlisting}
 
 Условие соединения - $LEFT JOIN$. В условии $WHERE$ исключается возможность равенства поля $t2.c$ значению $null$, значит изменим запрос на
 \begin{lstlisting}[language=SQL]
-query = {t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
+query = {FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
 \end{lstlisting}
 
 Условие соединения - $INNER JOIN$. Сортировок нет, значит вернуть $null$. 
