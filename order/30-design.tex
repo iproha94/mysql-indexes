@@ -1,19 +1,37 @@
 \chapter{Конструкторский раздел}
 
-Под \textbf{join-запросами} будем понимать запросы, вида листинг \ref{view-sql-query}.
+Под \textit{join запросами} будем понимать запросы, вида листинг \ref{view-join-query}.
 
-\begin{lstlisting}[language=sql, caption={Вид sql запроса},label=view-sql-query]
-t1 {INNER | LEFT | RIGHT} JOIN t2
-    ON conditional_expr
+\begin{lstlisting}[language=sql, caption={Вид join запроса},label=view-join-query]
+t1 {INNER | LEFT | RIGHT} JOIN t2 ON conditional_definition
     [WHERE where_definition]
     [ORDER BY col_name [ASC | DESC], ...]
+
+where_definition:
+    where_expression or 
+    where_expression [AND] where_expression 
+    
+where_expression:
+    column_name [> | >= | = | <> | <= | < ] constant or
+    column_name LIKE constant or
+    column_name IS NULL or 
+    column_name IS NOT NULL or 
+    where_definition   
+
+conditional_definition:
+    conditional_expression or 
+    conditional_expression [AND] conditional_expression 
+
+conditional_expression:
+    column_name [> | >= | = | <> | <= | < ] column_name or
+    conditional_expression
 \end{lstlisting}
 
-Разрабатываемый алгоритм должен определить, какие индексы необ­ходимо построить для оптимизации выполнения \textit{join-запроса}.
+Разрабатываемый алгоритм должен определить, какие индексы необ­ходимо построить для оптимизации выполнения \textit{join запроса}.
 
 Последовательность действий:
 \begin{enumerate}
-\item определить, по какой из двух таблиц оператора $JOIN$ будет осу­ществлено полное сканирование (учитывая правила СУБД соединения таблиц)
+\item определить, по какой из двух таблиц оператора \textit{JOIN} будет осу­ществлено полное сканирование (учитывая, как СУБД соединяет таблицы)
 \item разбить сложный запрос на два подзапроса
 \item построить индексы для каждого подзапроса (учитывая правила СУБД построения индексов)
 \item объединить индексы подзапросов в индекс запроса

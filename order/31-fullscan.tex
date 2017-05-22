@@ -1,44 +1,45 @@
 \section{Fullscan алгоритм}
 
-При соединении двух таблиц (A и B), для каждой строки одной таблицы A будет происходить сканирование другой таблицы B. Такое сканирование таблицы A назовем \textbf{полным сканированием}. 
+При соединении двух таблиц (A и B), для каждой строки одной таблицы A будет происходить сканирование другой таблицы B. Такое сканирование таблицы A назовем \textit{полным сканированием}. 
 
-\textbf{Fullscan алгоритм} - алгоритм для определения таблицы, по которой будет осуществлено полное сканирование. Алгоритм на вход принимает текст запроса и возвращает название таблицы, по которой будет полное сканирование или null, если таблица не определена (в таком случае MySQL после выбора подходящих индексов выберет, по какой таблице будет происходить полное сканирование).
+\textbf{Fullscan алгоритм} - алгоритм для определения таблицы, по которой будет осуществлено полное сканирование. Алгоритм на вход принимает текст запроса и возвращает название таблицы, по которой будет полное сканирование или NULL, если таблица не определена (в таком случае MySQL после выбора подходящих индексов выберет, по какой таблице будет происходить полное сканирование).
 
 В качестве fullscan алгоритма для join-запроса можно предложить алгоритм, при работе которого происходит анализ исследуемого запроса. Псевдокод представлена в алгоритме \ref{alg:fullscan}. Блок-схема представлена на рисунке \ref{img:fullscan}.
 
-\begin{algorithm}[h]
-\caption{Fullscan алгоритм}\label{alg:fullscan}
+\begin{algorithm}[h!]
+\caption{Fullscan алгоритм}
+\label{alg:fullscan}
 \begin{algorithmic}[1]
  
 \Function{fullscanAlg}{query}
-    \If {условие соединения $A LEFT JOIN B$}
-        \If {в условии WHERE исключается возможность равенства любого из полей таблицы B значению null}
-            \State {заменить $LEFT JOIN$ на $INNER JOIN$}
+    \If {условие соединения \textit{A LEFT JOIN B}}
+        \If {в условии WHERE исключается возможность равенства любого из полей таблицы B значению NULL}
+            \State {заменить \textit{LEFT JOIN} на \textit{INNER JOIN}}
         \Else
-            \State \Return таблица $A$
+            \State \Return таблица \textit{A}
         \EndIf
     \EndIf
     \Statex 
     
-    \If {условие соединения $A RIGHT JOIN B$}
-        \If {в условии WHERE исключается возможность равенства любого из полей таблицы $A$ значению null}
-            \State {заменить $RIGHT JOIN$ на $INNER JOIN$}
+    \If {условие соединения \textit{A RIGHT JOIN B}}
+        \If {в условии WHERE исключается возможность равенства любого из полей таблицы \textit{A} значению \textit{NULL}}
+            \State {заменить \textit{RIGHT JOIN} на \textit{INNER JOIN}}
         \Else
-            \State \Return таблица $B$
+            \State \Return таблица \textit{B}
         \EndIf
     \EndIf
     \Statex 
 
-    \If {условие соединения $A INNER JOIN B$}
-        \If {есть сортировка $ORDER BY A.a, \ldots$}
-            \State \Return таблица $A$
-        \ElsIf {есть сортировка $ORDER BY B.a, \ldots$}
-            \State \Return таблица $B$
+    \If {условие соединения \textit{A INNER JOIN B}}
+        \If {есть сортировка \textit{ORDER BY A.a, $\ldots$}}
+            \State \Return таблица \textit{A}
+        \ElsIf {есть сортировка \textit{ORDER BY B.a, $\ldots$}}
+            \State \Return таблица \textit{B}
         \EndIf
     \EndIf
     \Statex 
 
-    \State \Return $null$
+    \State \Return \textit{NULL}
 \EndFunction
  
 \end{algorithmic}
@@ -62,12 +63,12 @@
 query = {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
 \end{lstlisting}
 
-Условие соединения - $LEFT JOIN$. В условии $WHERE$ исключается возможность равенства поля $t2.c$ значению $null$, значит изменим запрос на
+Условие соединения - \textit{LEFT JOIN}. В условии \textit{WHERE} исключается возможность равенства поля \textit{t2.c} значению \textit{NULL}, значит изменим запрос на
 \begin{lstlisting}[language=SQL]
 query = {FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
 \end{lstlisting}
 
-Условие соединения - $INNER JOIN$. Сортировок нет, значит вернуть $null$. 
+Условие соединения - \textit{INNER JOIN}. Сортировок нет, значит вернуть \textit{NULL}. 
 
 \textbf{Ответ:} по какой таблице будет осуществлено полное сканирование на данном этапе не определено.
 
@@ -77,9 +78,9 @@ query = {FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5}
 query = {FROM t1 LEFT JOIN t2  ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c, t2.d}
 \end{lstlisting}
 
-Условие соединения - $LEFT JOIN$. В условии $WHERE$ не исключается возможность равенства любого поля таблицы $t2$ значению $null$, значит вернуть $t1$.
+Условие соединения - \textit{LEFT JOIN}. В условии \textit{WHERE} не исключается возможность равенства любого поля таблицы \textit{t2} значению \textit{NULL}, значит вернуть \textit{t1}.
 
-\textbf{Ответ:} по таблице $t1$ будет осуществлено полное сканирование. 
+\textbf{Ответ:} по таблице \textit{t1} будет осуществлено полное сканирование. 
 
 
 \paragraph{Пример №3}
@@ -87,11 +88,11 @@ query = {FROM t1 LEFT JOIN t2  ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORD
 query = {FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d}
 \end{lstlisting}
 
-Условие соединения - $LEFT JOIN$. В условии $WHERE$ исключается возможность равенства поля $t2.b$ и $t2.c$ значению $null$, значит изменим запрос на
+Условие соединения - \textit{LEFT JOIN}. В условии \textit{WHERE} исключается возможность равенства поля \textit{t2.b} и \textit{t2.c} значению \textit{NULL}, значит изменим запрос на
 \begin{lstlisting}[language=SQL]
 query = {FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d}
 \end{lstlisting}
 
-Условие соединения - $INNER JOIN$. Есть сортировка $ORDER BY t2.c, \ldots$. Вернуть $t2$.
+Условие соединения - \textit{INNER JOIN}. Есть сортировка \textit{ORDER BY t2.c, $\ldots$}. Вернуть \textit{t2}.
 
-\textbf{Ответ:} по таблице $t2$ будет осуществлено полное сканирование. 
+\textbf{Ответ:} по таблице \textit{t2} будет осуществлено полное сканирование. 
