@@ -60,20 +60,37 @@ class JoinQuery:
 
         return None
 
-    def get_simple_query(self, table_number):
-        t = self.get_fullscan_table()
+    def get_simple_queries(self):
+        return self._get_simple_query(0), self._get_simple_query(1)
+
+    def _get_simple_query(self, table_number):
+        fullscan_table = self.get_fullscan_table()
 
         query = SimpleQuery()
         for on in self.on:
             for field in on.fields:
                 if field.table_number == table_number:
-                    query.where.append(СonditionalExpression(
+                    query.where.append(ConditionalExpression(
                         field=field,
                         operator=on.operator,
-                        arguments=[None],
+                        args=[Arg()],
                     ))
 
+        for where in self.where:
+            if where.field.table_number == table_number:
+                query.where.append(where)
+
+        for order_by in self.order_by:
+            if order_by.field.table_number != fullscan_table:
+                break
+
+            if order_by.field.table_number == table_number:
+                query.order_by.append(order_by)
+
         return query
+
+    def get_indexes(self):
+        return self._get_simple_query(0).get_indexes(), self._get_simple_query(1).get_indexes()
 
     def __repr__(self):
         return """JoinQuery

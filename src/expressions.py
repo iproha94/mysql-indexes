@@ -1,6 +1,7 @@
 from enum import Enum
 
 Operators = Enum('Operators', 'g ge e ne le l like')
+ArgType = Enum('ArgType', 'value const null')
 
 
 class Field:
@@ -18,25 +19,39 @@ class Field:
             c=self.column_number,
         )
 
-class СonditionalExpression:
+
+class Arg:
+    def __init__(
+        self,
+        type=ArgType.const,
+        value=None,
+    ):
+        self.value = value
+        self.type = type
+
+    def __repr__(self):
+        return "{}".format(self.value if self.type == ArgType.value else self.type)
+
+
+class ConditionalExpression:
     def __init__(
         self, 
         field=None,
         operator=Operators.e,
-        arguments=None,
+        args=None,
     ):
-        if arguments is None:
-            arguments = []
+        if args is None:
+            args = []
 
         self.field = field
         self.operator = operator
-        self.arguments = arguments
+        self.args = args
 
     def __repr__(self):
         return "{f} {op} {args}".format(
             f=self.field,
             op=self.operator,
-            args=self.arguments
+            args=self.args
         )
 
 

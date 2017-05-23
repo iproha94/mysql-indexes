@@ -1,19 +1,20 @@
+from expressions import Operators
+
+
 class Index:
     def __init__(
         self,
-        where_fields=set(),
-        order_by_fields=None
+        fields=None,
     ):
-        if order_by_fields is None:
-            order_by_fields = []
+        if fields is None:
+            fields = []
 
-        self.where_fields = where_fields
-        self.order_by_fields = order_by_fields
+        self.fields = fields
 
-    def __str__(self):
-        return "where: %s, order_by: %s" % (
-            self.where_fields,
-            self.order_by_fields
+    def __repr__(self):
+        return """index fields:
+        {}""".format(
+            self.fields
         )
 
 
@@ -37,7 +38,7 @@ class SimpleQuery:
         self.where = where #массив связанных объектов СonditionalExpression условием AND
         self.order_by = order_by #содержит элементы OrderByExpression
 
-    def __str__(self):
+    def __repr__(self):
         return """SimpleQuery
         columns_name: {columns_name}
         where: {where}
@@ -50,15 +51,17 @@ class SimpleQuery:
     def get_indexes(self):
         index = Index()
 
+        index.fields.append(set())
         for where in self.where:
             if where.operator == Operators.e:
-                index.where_fields.add(where.field)
+                index.fields[-1].add(where.field)
 
             elif where.operator == Operators.like and '%' not in where.arguments[0]:
-                index.where_fields.add(where.field)
+                index.fields[-1].add(where.field)
 
+        index.fields.append([])
         for order_by in self.order_by:
-            index.order_by_fields.append(order_by.field)
+            index.fields[-1].append(order_by.field)
 
         # for where in self.where:
         #     elif where.operator == Operators.like and '%' in where.arguments[0] and  where.arguments[0][-1] == '%':
