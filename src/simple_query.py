@@ -1,5 +1,5 @@
 from expressions import Operators
-
+from parse_sql import *
 
 def _delete_fields(fields, delete_field):
     while True:
@@ -15,7 +15,12 @@ class Index:
             where_eq_fields=None,
             where_not_eq_fields=None,
             order_by_fields=None,
+            table_name=None,
+            columns_name=None,
     ):
+        self.columns_name = columns_name
+        self.table_name = table_name
+
         if order_by_fields is None:
             order_by_fields = []
         self.order_by_fields = order_by_fields
@@ -29,10 +34,21 @@ class Index:
         self.where_eq_fields = where_eq_fields
 
     def __repr__(self):
-        return "Index: {} {} {}".format(
-            self.where_eq_fields,
-            self.where_not_eq_fields,
-            self.order_by_fields
+        fields = ', '.join(map(lambda x: self.columns_name[x.column_number], self.where_eq_fields + self.order_by_fields + self.where_not_eq_fields))
+
+        if len(fields) == 0:
+            return ""
+
+        fields_for_name = ''.join(map(lambda x: self.columns_name[x.column_number], self.where_eq_fields + self.order_by_fields + self.where_not_eq_fields))
+        index_name = "index_{}_{}".format(
+            self.table_name,
+            fields_for_name
+        )
+
+        return "create index {} on {}({});".format(
+            index_name,
+            self.table_name,
+            fields
         )
 
     def delete_fields(self, delete_fields):
@@ -41,42 +57,57 @@ class Index:
             _delete_fields(self.where_not_eq_fields, delete_field)
             _delete_fields(self.order_by_fields, delete_field)
 
-    def get_sql_query_create_index(self, tables_name, columns_name):
-        pass
-
 
 class SimpleQuery:
     def __init__(
             self,
+            sql_query=None,
+            table_name=None,
             columns_name=None,
             where=None,
             order_by=None
     ):
-        if order_by is None:
-            order_by = []
+        if sql_query is not None:
+            query = sql_query.lower()
 
-        if where is None:
-            where = []
+            self.table_name = get_table_name(query)
 
-        if columns_name is None:
-            columns_name = []
+            query = query.replace("{}.".format(self.table_name), "")
+            self.columns_name = get_columns_name(query)
+            self.where = get_where(query, self.columns_name)
+            self.order_by = get_order_by(query, self.columns_name)
+        else:
+            self.table_name = table_name
 
-        self.columns_name = columns_name
-        self.where = where  # массив связанных объектов СonditionalExpression условием AND
-        self.order_by = order_by  # содержит элементы OrderByExpression
+            if order_by is None:
+                order_by = []
+            self.order_by = order_by  # содержит элементы OrderByExpression
+
+            if where is None:
+                where = []
+            self.where = where  # массив связанных объектов СonditionalExpression условием AND
+
+            if columns_name is None:
+                columns_name = []
+            self.columns_name = columns_name
 
     def __repr__(self):
         return """SimpleQuery
+        table_name: {table_name}
         columns_name: {columns_name}
         where: {where}
         order_by: {order_by} """.format(
+            table_name=self.table_name,
             columns_name=self.columns_name,
             where=self.where,
             order_by=self.order_by
         )
 
     def get_index(self):
-        index = Index()
+        index = Index(
+            table_name=self.table_name,
+            columns_name=self.columns_name,
+        )
 
         for where in self.where:
             if where.operator == Operators.e:

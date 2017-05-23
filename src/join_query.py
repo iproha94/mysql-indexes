@@ -66,7 +66,10 @@ class JoinQuery:
     def _get_simple_query(self, table_number):
         fullscan_table = self.get_fullscan_table()
 
-        query = SimpleQuery()
+        query = SimpleQuery(
+            table_name=self.tables_name[table_number],
+            columns_name=self.columns_name[table_number],
+        )
         for on in self.on:
             for field in on.fields:
                 if field.table_number == table_number:

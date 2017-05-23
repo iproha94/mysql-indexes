@@ -1,6 +1,17 @@
 from enum import Enum
 
 Operators = Enum('Operators', 'g ge e ne le l like')
+
+OperatorbySymbol = {
+    ">": Operators.g,
+    ">=": Operators.ge,
+    "=": Operators.e,
+    "<>": Operators.ne,
+    "<=": Operators.le,
+    "<": Operators.l,
+    "like": Operators.like,
+}
+
 ArgType = Enum('ArgType', 'value const null')
 
 
