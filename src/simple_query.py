@@ -1,29 +1,56 @@
 from expressions import Operators
 
 
+def _delete_fields(fields, delete_field):
+    while True:
+        try:
+            fields.remove(delete_field)
+        except Exception:
+            break
+
+
 class Index:
     def __init__(
-        self,
-        fields=None,
+            self,
+            where_eq_fields=None,
+            where_not_eq_fields=None,
+            order_by_fields=None,
     ):
-        if fields is None:
-            fields = []
+        if order_by_fields is None:
+            order_by_fields = []
+        self.order_by_fields = order_by_fields
 
-        self.fields = fields
+        if where_not_eq_fields is None:
+            where_not_eq_fields = []
+        self.where_not_eq_fields = where_not_eq_fields
+
+        if where_eq_fields is None:
+            where_eq_fields = []
+        self.where_eq_fields = where_eq_fields
 
     def __repr__(self):
-        return """index fields:
-        {}""".format(
-            self.fields
+        return "Index: {} {} {}".format(
+            self.where_eq_fields,
+            self.where_not_eq_fields,
+            self.order_by_fields
         )
+
+    def delete_fields(self, delete_fields):
+        for delete_field in delete_fields:
+            _delete_fields(self.where_eq_fields, delete_field)
+            _delete_fields(self.where_not_eq_fields, delete_field)
+            _delete_fields(self.order_by_fields, delete_field)
+
+    def get_sql_query_create_index(self, tables_name, columns_name):
+        pass
 
 
 class SimpleQuery:
     def __init__(
-        self,
-        columns_name=None,
-        where=None,
-        order_by=None
+            self,
+            columns_name=None,
+            where=None,
+            order_by=None
     ):
         if order_by is None:
             order_by = []
@@ -35,8 +62,8 @@ class SimpleQuery:
             columns_name = []
 
         self.columns_name = columns_name
-        self.where = where #массив связанных объектов СonditionalExpression условием AND
-        self.order_by = order_by #содержит элементы OrderByExpression
+        self.where = where  # массив связанных объектов СonditionalExpression условием AND
+        self.order_by = order_by  # содержит элементы OrderByExpression
 
     def __repr__(self):
         return """SimpleQuery
@@ -48,30 +75,24 @@ class SimpleQuery:
             order_by=self.order_by
         )
 
-    def get_indexes(self):
+    def get_index(self):
         index = Index()
 
-        index.fields.append(set())
         for where in self.where:
             if where.operator == Operators.e:
-                index.fields[-1].add(where.field)
-
+                index.where_eq_fields.append(where.field)
             elif where.operator == Operators.like and '%' not in where.arguments[0]:
-                index.fields[-1].add(where.field)
+                index.where_eq_fields.append(where.field)
 
-        index.fields.append([])
         for order_by in self.order_by:
-            index.fields[-1].append(order_by.field)
+            if order_by.field not in index.where_eq_fields:
+                index.order_by_fields.append(order_by.field)
 
-        # for where in self.where:
-        #     elif where.operator == Operators.like and '%' in where.arguments[0] and  where.arguments[0][-1] == '%':
-        #         index.fix_fields.append(where.column_name)
-
-        #     elif where.operator != Operators.like:
+        for where in self.where:
+            if (where.operator in [Operators.g, Operators.ge, Operators.l, Operators.le, Operators.ne] or
+                    (where.operator == Operators.like and where.args[0][-1] == '%')) and \
+                    all(x.column_number != where.field.column_number for x in index.where_eq_fields) and \
+                    all(x.column_number != where.field.column_number for x in index.order_by_fields):
+                index.where_not_eq_fields.append(where.field)
 
         return index
-
-
-if __name__ == '__main__':
-    from expressions import *
-

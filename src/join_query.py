@@ -90,7 +90,26 @@ class JoinQuery:
         return query
 
     def get_indexes(self):
-        return self._get_simple_query(0).get_indexes(), self._get_simple_query(1).get_indexes()
+        fullscan_table = self.get_fullscan_table()
+
+        indexes = []
+        if fullscan_table is not None:
+            indexes.append(self._get_simple_query(0).get_index())
+            indexes.append(self._get_simple_query(1).get_index())
+
+            for on in self.on:
+                indexes[fullscan_table].delete_fields(filter(lambda x: x.table_number == fullscan_table, on.fields))
+        else:
+            indexes.append(self._get_simple_query(0).get_index())
+            indexes.append(self._get_simple_query(1).get_index())
+            indexes.append(self._get_simple_query(0).get_index())
+            indexes.append(self._get_simple_query(1).get_index())
+
+            for on in self.on:
+                indexes[1].delete_fields(filter(lambda x: x.table_number == 1, on.fields))
+                indexes[2].delete_fields(filter(lambda x: x.table_number == 0, on.fields))
+
+        return indexes
 
     def __repr__(self):
         return """JoinQuery
