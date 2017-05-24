@@ -1,5 +1,6 @@
 from enum import Enum
 
+JoinType = Enum('JoinType', 'inner left right')
 Operators = Enum('Operators', 'g ge e ne le l like')
 
 OperatorbySymbol = {
