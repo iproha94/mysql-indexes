@@ -91,5 +91,4 @@ if __name__ == '__main__':
 
     sql = str(sys.argv[1])
     query = SimpleQuery(sql_query=sql)
-    print(query)
     print(query.get_index().sql())
