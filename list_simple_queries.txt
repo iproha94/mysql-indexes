@@ -1,0 +1,14 @@
+"select * from t where a = 5 and b > 1"
+t(a, b)
+
+"select * from t where a = 5 and c = 5"
+t(a, c)
+
+"select * from t where a = 5 and c > 3 and b = 5000"
+t(a, b, c)
+
+"select * from t where a = 5"
+t(a)
+
+"select * from t where b = 5 and a = 5 and c > 3 order by c, d"
+t(b, a, c, d)
