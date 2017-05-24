@@ -88,6 +88,7 @@ class SimpleQuery:
 
 if __name__ == '__main__':
     import sys
+
     sql = str(sys.argv[1])
     query = SimpleQuery(sql_query=sql)
     print(query)

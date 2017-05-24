@@ -150,4 +150,11 @@ class JoinQuery:
 
 
 if __name__ == '__main__':
-    from expressions import *
+    import sys
+
+    sql = str(sys.argv[1])
+    query = JoinQuery(sql_query=sql)
+
+    #TODO подумать как возвращать другую пару индексов
+    print(query.get_indexes()[0].sql())
+    print(query.get_indexes()[1].sql())

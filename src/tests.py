@@ -230,12 +230,13 @@ def test_join_query_by_sql(sql):
 # test_get_fullscan_table()
 # test_print_simple_query(sq2)
 # test_print_join_query(jq1)
+
 # test_simple_query_by_sql("select * from t2 where a > 5 and b > 5 order by c, d desc;")
 
-test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5")
-test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c , t2.d")
-test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d")
-test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t2.a = t1.a ORDER BY t2.b")
-test_join_query_by_sql("select * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c")
+# test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5")
+# test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c , t2.d")
+# test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d")
+# test_join_query_by_sql("select * FROM t1 LEFT JOIN t2 ON t2.a = t1.a ORDER BY t2.b")
+# test_join_query_by_sql("select * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c")
 
 
