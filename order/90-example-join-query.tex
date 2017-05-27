@@ -1,0 +1,228 @@
+\paragraph{Приложение А. Примеры получения индексов для сложных запросов}
+
+Рассмотрим получение индексов для заданного SQL запроса на конкретных примерах.
+
+\paragraph{Пример №1}
+
+\begin{lstlisting}[language=SQL]
+query := t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5
+
+T := NULL 
+
+query1 := query 
+
+query21 := ON t1.a = const WHERE t1.b > 1 
+query22 := ON t2.a = const WHERE t2.c = 5
+
+index(t1) := t1(a, b!) 
+index(t2) := t2(a, c) 
+
+index1(t1) := t1(a, b!) 
+index2(t2) := t2(c) 
+
+index1(t2) := t2(a, c) 
+index2(t1) := t1(b) 
+\end{lstlisting}
+
+(t1(a, b!), t2(c)) $\equiv$ (t1(a, b), t2(c)) 
+
+(t1(b), t2(a, c)) $\equiv$ (t1(b), t2(a, c)), (t1(b), t2(c, a)) 
+
+\textbf{Ответ:} \textit{(t1(a, b), t2(c)), (t1(b), t2(a, c)), (t1(b), t2(c, a))} - множество пар индексов, наиболее подходящих данному запросу. 
+
+
+\paragraph{Пример №2}
+\begin{lstlisting}[language=SQL]
+query := FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c, t2.d
+
+T := t1 
+
+query1 := FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3
+
+query21 := ON t1.a = const WHERE t1.b = 5000 AND t1.c > 3 
+query22 := ON t2.a = const
+
+index(t1) := t1(a, b, c!) 
+index(t2) := t2(a) 
+
+index(t1) := t1(b, c!) 
+\end{lstlisting}
+ 
+(t1(b, c!), t2(a)) $\equiv$ {(t1(b, c), t2(a))} 
+
+\textbf{Ответ:} \textit{(t1(b, c), t2(a))} - множество пар индексов, наиболее подходящих данному запросу.
+
+
+\paragraph{Пример №3}
+\begin{lstlisting}[language=SQL]
+query := FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d
+
+T := t2
+
+query1 := query 
+
+query21 := ON t1.a = const 
+query22 := ON t2.a = const WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d 
+
+index(t1) := t1(a) 
+index(t2) := t2(a, b, c!, d!) 
+
+index(t2) := t2(b, c!, d!) 
+\end{lstlisting}
+
+(t1(a), t2(b, c!, d!)) $\equiv$ (t1(a), t2(b, c, d)) 
+
+\textbf{Ответ:} \textit{(t1(a), t2(b, c, d))} - множество пар индексов, наиболее подходящих данному запросу.
+
+
+\paragraph{Пример №4}
+\begin{lstlisting}[language=SQL]
+query := FROM t1 LEFT JOIN t2 ON t2.a = t1.a ORDER BY t2.b
+
+T := t1 
+
+query1 := t1 LEFT JOIN t2 ON t2.a = t1.a 
+
+query21 := ON t1.a = const 
+query22 := ON t2.a = const 
+
+index(t1) := t1(a) 
+index(t2) := t2(a) 
+
+index(t1) := t1() 
+\end{lstlisting}
+ 
+(t1(), t2(a)) $\equiv$ (t1(), t2(a)) 
+
+\textbf{Ответ:} \textit{(t1(), t2(a))} - множество пар индексов, наиболее подходящих данному запросу.
+
+
+\paragraph{Пример №5}
+\begin{lstlisting}[language=SQL]
+query := 
+    t1 INNER JOIN t2
+        ON t1.a = t2.a
+    WHERE t1.b = const
+    ORDER BY t1.c
+\end{lstlisting}
+
+\textbf{Ответ:} \textit{(t1(b, c), t2(a))} - множество пар индексов, наиболее подходящих данному запросу.
+
+
+% \paragraph{Пример №6}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     t1 LEFT JOIN t2
+%         ON t2.id = t1.id_n
+%             AND t2.c = 5
+%     WHERE t1.b > 1
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+% \paragraph{Пример №7}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     t1 LEFT JOIN t2
+%         ON t2.a = t1.a
+%     ORDER BY t1.b
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+% \paragraph{Пример №7}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT *
+%     FROM t1 LEFT JOIN t2
+%         ON t1.a = t2.a
+%     WHERE t1.b = 5000
+%     ORDER BY t2.a
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+% \paragraph{Пример №8}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT *
+%     FROM t1 LEFT JOIN t2
+%         ON t1.b = t2.b
+%     WHERE t1.c = 5000
+%         AND t2.c = 5000
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+% \paragraph{Пример №9}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT *
+%     FROM t1 INNER JOIN t2
+%         ON t1.b = t2.b
+%             AND t2.c = 5000
+%     WHERE t1.c > 0
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+% \paragraph{Пример №10}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT t2.b
+%     FROM t1 LEFT JOIN t2
+%         ON t1.c = t2.c
+%             AND t2.d = 5000
+%     ORDER BY t2.b
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+% \paragraph{Пример №11}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     FROM t1 LEFT JOIN t2
+%         ON t1.b = t2.b
+%     WHERE t1.c = 5000
+%         AND t2.c = 5000
+%     ORDER BY t2.b
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+% \paragraph{Пример №12}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT *
+%     FROM t1 LEFT JOIN t2
+%         ON t1.b = t2.b
+%     WHERE t2.d like 'ABC%'
+%     ORDER BY t2.d
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.
+
+
+% \paragraph{Пример №13}
+% \begin{lstlisting}[language=SQL]
+% query = {
+%     SELECT *
+%     FROM t1 LEFT JOIN t2
+%         ON t1.b = t2.b
+%             AND t2.a like 'A%'
+%     ORDER BY t2.d
+% }
+% \end{lstlisting}
+
+% \textbf{Ответ:} ${}$ - множество пар индексов, наиболее подходящих данному запросу.

@@ -1,0 +1,103 @@
+\subsection{Построение индекса для простого запроса}
+
+Для того, чтобы автоматизировать процесс построения индекса, рассмотренные в разделе \ref{section:b-tree-indexes-innodb}, необходимо исследовать в каких случаях они могут применяться. Рассмотрим примеры использования индексов для простых запросов (по одной таблице).
+
+
+\paragraph{Индексы для WHERE}
+
+Для запроса на листинге \ref{sql:index-on-where} можно построить индексы \textit{(dob, last\_name)} и \textit{(last_name, dob)}.
+\begin{lstlisting}[language=sql, label=sql:index-on-where, caption={запрос для index-on-where}]
+SELECT * 
+FROM poet
+WHERE last_name = ”Пушкин” 
+    AND dob = 1799
+\end{lstlisting}
+
+Рассмотрим работу индексов на примере индекса \textit{INDEX $\equiv$ (a, b, c)}, где \textit{a, b} - числа, \textit{c} - строка.
+
+\begin{enumerate}
+\item \textit{a = 5 AND b = 10 AND c="Hello world"} \\  \textit{INDEX} применяется полностью
+\item \textit{b = 5} \\   \textit{INDEX} не применяется
+\item \textit{a = 5} \\  \textit{INDEX} применяется как левый префикс по первому полю
+\item \textit{a = 5 AND b = 10} \\  \textit{INDEX} применяется как левый префикс по первым двум полям
+\item \textit{a = 5 AND b = 10 AND c LIKE "Hello w\%"}  \\  \textit{INDEX} применяется как левый префикс по первым трем полям
+\item \textit{a > 5} \\  \textit{INDEX} применяется как левый префикс по первому полю
+\item \textit{a = 5 AND b IN (2,3)} \\ условие \textit{IN} - рассматривается как поиск по диапазону, \textit{INDEX} применяется как левый префикс по первым двум полям
+\item \textit{a=5 AND b=10 AND c LIKE "\% world"} \\  \textit{INDEX} применяется как левый префикс по первым двум полям
+\item \textit{a>5 AND b=2} \\ \textit{INDEX} применяется как левый префикс по первому полю
+\item \textit{a=5 AND c=10} \\ \textit{INDEX} применяется как левый префикс по первым двум полям
+\end{enumerate}
+
+
+\paragraph{Индексы при сортировке}
+
+В индексе данные хранятся в отсортированном виде, поэтому дополнительно сортировать данные выборки не требуется.
+
+
+Для запроса на листинге \ref{sql:index-order1} строим индекс \textit{(dob)}.
+
+\begin{lstlisting}[language=sql, label=sql:index-order1, caption={запрос для index-order}]
+SELECT * 
+FROM poet
+ORDER BY dob
+\end{lstlisting}
+
+
+Для запроса на листинге \ref{sql:index-order2} строим индекс \textit{(country, dob)}. В индексе находим строки, удовлетворяющие условию \textit{country="ru"}, а в этой выборке строки уже отсортированы по \textit{dob}.
+
+\begin{lstlisting}[language=sql, label=sql:index-order2, caption={запрос для index-order}]
+SELECT * 
+FROM poet
+WHERE country="ru" 
+ORDER BY dob
+\end{lstlisting}
+
+
+Для запроса на листинге \ref{sql:index-order3} строим индекс \textit{(dob)}. \textit{GROUP BY} возьмет уже отсортированные строки из индекса и уберет повторы, а т.к. строки уже отсортированные - \textit{ORDER BY} всего лишь задаст, в каком порядке выводить данные. 
+
+\begin{lstlisting}[language=sql, label=sql:index-order3, caption={запрос для index-order}]
+SELECT *
+FROM poet
+GROUP BY dob
+ORDER BY dob
+\end{lstlisting}
+
+
+Примеры запросов, к которым применяется индекс \textit{(a, b)}:
+
+\begin{enumerate}
+\item сортировка по первой колонке
+\item первая колонка в условии \textit{WHERE}, и сортировка по второй колонке
+\item первая колонка в условии \textit{WHERE} и сортировка по первой колонке
+\item сортировка по двум колонкам и обе в одну сторону
+\end{enumerate}
+
+
+Примеры запросов, к которым не применяется индекс \textit{(a, b)}:
+
+\begin{enumerate}
+\item сортировка по второй колонке, при этом в условии \textit{WHERE} первая колонка не проверяется на строгое равенство. Например, для запроса \textit{WHERE a>5 ORDER BY b} в индексе будут данные \textit{(a, b): a=6, b=2; a=6, b=3; a=7, b=0; a=8, b=1}. MySQL сделает выборку по условию \textit{a>5}, но в этой выборке строки не отсортированы по \textit{b}.
+\item \textit{WHERE a IN (1,2) ORDER BY b} (аналогично предыдущему запросу)
+\item сортировка разных столбцов в разных направлениях\\
+Чтобы обойти это, можно сделать виртуальную колонку, например, перед числом поставить минус.
+\end{enumerate}
+
+
+
+\paragraph{Агрегирующие функции MIN, MAX}
+
+Так как данные в индексе отсортированы, то для нахождения минимального или максимального значения достаточно взять крайнее значение.
+
+Для запроса на листинге \ref{sql:index-aggr1} строим индекс $(dob)$.
+\begin{lstlisting}[language=sql, label=sql:index-aggr1, caption={запрос для index-aggr}]
+SELECT MAX(dob) 
+FROM poet;
+\end{lstlisting}
+
+Для запроса на листинге \ref{sql:index-aggr2} строим индекс $(first\_name, dob)$.
+\begin{lstlisting}[language=sql, label=sql:index-aggr2, caption={запрос для index-aggr}]
+SELECT MAX(dob) 
+FROM poet
+GROUP BY first_name
+\end{lstlisting}
+
