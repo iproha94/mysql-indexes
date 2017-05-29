@@ -1,6 +1,13 @@
 \chapter{Конструкторский раздел}
 
+В данном разделе изучаются индексы, типы индексов, индексы в СУБД MySQL. На основе этой информации описывается алгоритм построения индексов для сложных запросов. Данная задача рассматривается по объектно-ориентированной методологии. 
+
+\section{Индексы}
+
 Индекс — объект базы данных, создаваемый с целью повышения производительности поиска данных. Таблицы в базе данных могут иметь большое количество строк, которые хранятся в произвольном порядке, и их поиск по заданному критерию путём последовательного просмотра таблицы строка за строкой может занимать много времени. Индекс формируется из значений одного или нескольких столбцов таблицы и указателей на соответствующие строки таблицы и, таким образом, позволяет искать строки, удовлетворяющие критерию поиска. Ускорение работы с использованием индексов достигается в первую очередь за счёт того, что индекс имеет структуру, оптимизированную под поиск.
+
+\paragraph{Производительность}
+\label{paragraph:performance}
 
 Для оптимальной производительности запросов индексы обычно создаются на тех столбцах таблицы, которые часто используются в запросах. Для одной таблицы может быть создано несколько индексов. Однако увеличение числа индексов замедляет операции добавления, обновления, удаления строк таблицы, поскольку при этом приходится обновлять сами индексы. Кроме того, индексы занимают дополнительный объем памяти, поэтому перед созданием индекса следует убедиться, что планируемый выигрыш в производительности запросов превысит дополнительную затрату ресурсов компьютера на сопровождение индекса. \cite{wikipedia.org:index}
 
@@ -33,9 +40,10 @@
 Под \textit{сложным запросом} будем понимать запросы, вида листинг \ref{view-join-query}.
 
 \begin{lstlisting}[language=sql, caption={Вид сложного запроса},label=view-join-query]
+SELECT * FROM
 t1 {INNER | LEFT | RIGHT} JOIN t2 ON conditional_definition
     [WHERE where_definition]
-    [ORDER BY col_name [ASC | DESC], ...]
+    [ORDER BY col_name [ASC | DESC]]
 
 where_definition:
     where_expression or 
@@ -51,7 +59,7 @@ conditional_definition:
     conditional_expression [AND] conditional_expression 
 
 conditional_expression:
-    column_name [> | >= | = | <> | <= | < ] column_name or
+    column_name = column_name or
     conditional_expression
 \end{lstlisting}
 
@@ -62,7 +70,7 @@ conditional_expression:
 \begin{figure}[h!]
   \centering
   \includegraphics[scale=0.7]{full-alg.png}
-  \caption{Блок-схема определения индексов}
+  \caption{Схема определения индексов}
   \label{img:full-alg}
 \end{figure}
 
@@ -80,7 +88,8 @@ conditional_expression:
 \paragraph{Примеры}
 
 Пусть\\
-\textit{T = t2, query = $\ldots$ ORDER BY t2.z, t2.y, t1.z, t1.y, t2.x $\ldots$},\\
+\textit{T = t2},\\
+\textit{query = $\ldots$ ORDER BY t2.z, t2.y, t1.z, t1.y, t2.x $\ldots$},\\
 тогда \\
 \textit{query1 = $\ldots$ ORDER BY t2.z, t2.y}
 
@@ -92,15 +101,15 @@ conditional_expression:
 
 \subsection{Разбиение сложного запроса}
 
-Сложный запрос необходимо разбить на два простых подзапроса.
+Сложный запрос необходимо разбить на два простых подзапроса, при этом в условии соединения таблиц отбрасываемую таблицу заменить на \textit{CONST} и переместить в блок \textit{WHERE}.
 
 \paragraph{Примеры}
 
 Пусть \\
 \textit{query = $\ldots$ ON t1.a = t2.a WHERE t1.b = Z, t2.b = Y $\ldots$},\\
 тогда\\
-\textit{query1 = $\ldots$ WHERE t1.a = const AND t1.b = Z $\ldots$}, \\
-\textit{query2 = $\ldots$ WHERE t2.a = const AND t2.b = Y $\ldots$}
+\textit{query1 = $\ldots$ WHERE t1.a = CONST AND t1.b = Z $\ldots$}, \\
+\textit{query2 = $\ldots$ WHERE t2.a = CONST AND t2.b = Y $\ldots$}
 
 
 \input{31-simple-index}
@@ -108,7 +117,7 @@ conditional_expression:
 
 \subsection{Объединение индексов подзапросов}
 
-При объединении индексов для двух простых подзапросов необходимо из индекса для таблицы, по которому будет полное сканирование удалить поле, по которому происходит соединение таблиц. Если таблицы, по которое происходит полное сканирование не определена, то вернуть две пары индексов, каждая из которых может быть использована для оптимизации выполнения запроса.
+При объединении индексов для двух простых подзапросов необходимо из индекса для таблицы, по которому будет полное сканирование, удалить поле, по которому происходит соединение таблиц. Если таблица, по которой происходит полное сканирование не определена, то вернуть две пары индексов, каждая из которых может быть использована для оптимизации выполнения запроса.
 
 Пусть \\
 \textit{T = t1},\\
@@ -117,7 +126,6 @@ conditional_expression:
 \textit{query0 = $\ldots$ ON t1.a = t2.a $\ldots$},\\
 тогда индексы для сложного запроса: \\
 \textit{index(t1) = t1(b)}, \textit{index(t2) = t2(c, a)}.
-
 
 Пусть \\
 \textit{T = NULL},\\
@@ -129,3 +137,43 @@ conditional_expression:
 \textit{index2(t1) = t1(b, c)}, \textit{index1(t2) = t2(a, b, c)}.
 
 
+\input{31-ooa}
+
+\section{Тестирование разрбатываемого приложения}
+
+Основываясь на виде запроса (листинг \ref{view-join-query}), который будет обрабатывать разрабатываемый инструмент, выделим параметры, которые могут изменяться и значения, которые они могут принимать:
+
+\begin{enumerate}
+\item \textbf{join}: \{left, right, inner\},
+\item \textbf{where}: \{-, \textit{t1.a = const}, \textit{t2.a = const}, \textit{t1.a <> const}, \textit{t2.a <> const}\}
+\item \textbf{order by}: \{-, t1.a, t2.a\}
+\end{enumerate}
+
+Учитывая колличество параметров и их значения, для тестрования разрабатываемого ПО необходимо провести $3 * 5 * 3 = 45$ экспериментов.
+
+По \textit{методу всех пар}, т.к. большинство ошибок проявляются либо при конкретных значениях одного параметра, либо взаимным влиянием значений двух параметров \cite{article:Telcordia}, то достаточно провести 15 экспериментов. План экспериментов представлен в таблице \ref{table:list_experiments}.
+
+\begin{table}[h]
+\caption{План экспериментов}\label{table:list_experiments}.
+\medskip
+\begin{tabular}{|l|l|l|l|}
+\hline
+№ & join & order by & where\\
+\hline
+1 & inner & - & $-$\\\hline
+2 & inner & t1.c & $t1.b = const$\\\hline
+3 & inner & t2.c & $t2.b = const$\\\hline
+4 & inner & - & $t1.b > const$\\\hline
+5 & inner & t1.c & $t2.b > const$\\\hline
+6 & left & t2.c & $-$\\\hline
+7 & left & - & $t1.b = const$\\\hline
+8 & left & t1.c & $t2.b = const$\\\hline
+9 & left & t2.c & $t1.b > const$\\\hline
+10 & left & - & $t2.b > const$\\\hline
+11 & right & t1.c & $-$\\\hline
+12 & right & t2.c & $t1.b = const$\\\hline
+13 & right & - & $t2.b = const$\\\hline
+14 & right & t1.c & $t1.b > const$\\\hline
+15 & right & t2.c & $t2.b > const$\\\hline
+\end{tabular}
+\end{table}

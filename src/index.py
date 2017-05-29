@@ -43,6 +43,7 @@ class Index:
         )
 
     def sql(self):
+        #TODO поля для сортировки проверить на однонаправленность
         fields = ', '.join(map(lambda x: self.columns_name[x.column_number], self.where_eq_fields + self.order_by_fields + self.where_not_eq_fields))
 
         if len(fields) == 0:

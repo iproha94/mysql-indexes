@@ -1,0 +1,194 @@
+\chapter{Эксперементальный раздел}
+
+В данном разделе будет осуществлено системное тестирование разработанного ПО по плану экспериментов из таблицы \ref{table:list_experiments}. Целью эксперементов является исследование использования СУБД MySQL предложенных индексов разработанным ПО. В больше части экспериментов индексы должны быть использованы СУБД, и при этом должен быть выйгрыш во времени. Однако в небольшом колличестве экспериментов выйгрыша во времени может не оказаться, по причинам, указанных в параграфе \ref{paragraph:performance}. 
+
+Эксперименты проводятся на машине со следующими программными и аппаратными характеристиками:
+\begin{enumerate}
+\item \textbf{ОС}: UBUNTU 12
+\item \textbf{версия СУБД}: MySQL 5.5
+\item \textbf{ОЗУ}: 1Гб.
+\end{enumerate}
+
+Скрипты по созданию таблиц БД представлены на лиcтингах \ref{create_db_tables} и \ref{full_db_tables}. Создается 2 таблицы с 4 полями, где 3 поля - это случайные числа, четвертое поле - случайная строка. Каждая таблица заполняется на 10000 записей.
+
+\begin{lstlisting}[language=sql, caption={Создание таблиц БД},label=create_db_tables]
+create table t1 (a INT(5), b INT(5), c INT(5), d CHAR(50)) engine innodb;
+create table t2 (a INT(5), b INT(5), c INT(5), d CHAR(50)) engine innodb;
+\end{lstlisting}
+
+\begin{lstlisting}[language=python, caption={Наполнение таблиц БД},label=full_db_tables]
+import MySQLdb
+import random
+import string
+
+db = MySQLdb.connect(host="localhost", user="root", passwd="1", db="test", charset='utf8')
+cursor = db.cursor()
+
+for i in range(10000):
+    a = random.randint(0, 10)
+    b = random.randint(0, 10)
+    c = random.randint(0, 10)
+    d = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(30))
+
+    sql = """INSERT INTO t1(a, b, c, d) VALUES (%d, %d, %d, '%s')""" % (a, b, c, d)
+    cursor.execute(sql)
+
+    sql = """INSERT INTO t2(a, b, c, d) VALUES (%d, %d, %d, '%s')""" % (a, b, c, d)
+    cursor.execute(sql)
+
+db.commit()
+ 
+db.close()
+\end{lstlisting}
+
+
+Для проведения экспериментов будут использованы встроенные средства MySQL: 
+\begin{enumerate}
+\item \textbf{EXPLAIN} - для проверки использования индекса,
+\item \textbf{SHOW PROFILE} - для сравнения времени выполнения запросов.
+\end{enumerate}
+
+\section{Результаты экспериментов}
+
+\paragraph{Эксперимент №1}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 INNER JOIN t2 ON t1.a = t2.a}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00033800\\
+\textbf{Время выполнения без индекса}: 0.00304400\\
+\textbf{Индексы ускорили время в} 9 раз\\
+
+\paragraph{Эксперимент №2}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c}\\
+\textbf{Результат}: \textit{create index index_t1_bc on t1(b, c);}, \textit{create index index_t2_a on t2(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00623250\\
+\textbf{Время выполнения без индекса}: 0.93866375\\
+\textbf{Индексы ускорили время в} 150 раз\\
+
+\paragraph{Эксперимент №3}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t2.b = 5 ORDER BY t2.c}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}, \textit{create index index_t2_bc on t2(b, c);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00045800\\
+\textbf{Время выполнения без индекса}: 0.94153075\\
+\textbf{Индексы ускорили время в} 2055 раз\\
+
+\paragraph{Эксперимент №4}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b > 5}\\
+\textbf{Результат}: \textit{create index index_t1_ab on t1(a, b);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00972600\\
+\textbf{Время выполнения без индекса}: 0.00577575\\
+\textbf{Индексы ускорили время в} 0,5 раза\\
+
+\paragraph{Эксперимент №5}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b > 5 ORDER BY t1.c}\\
+\textbf{Результат}: \textit{create index index_t1_c on t1(c);}, \textit{create index index_t2_ab on t2(a, b);}\\
+\textbf{Используется индекс}: -\\
+\textbf{Время выполнения с индексом}: 0.00148550\\
+\textbf{Время выполнения без индекса}: 6.01183250\\
+\textbf{Индексы ускорили время в} 4047 раз\\
+
+\paragraph{Эксперимент №6}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a ORDER BY t2.c}\\
+\textbf{Результат}: \textit{create index index_t2_a on t2(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 12.71380375\\
+\textbf{Время выполнения без индекса}: 33.84384225\\
+\textbf{Индексы ускорили время в} 2,6 раз\\
+
+\paragraph{Эксперимент №7}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5}\\
+\textbf{Результат}: \textit{create index index_t1_b on t1(b);}, \textit{create index index_t2_a on t2(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00062225\\
+\textbf{Время выполнения без индекса}: 0.00045175\\
+\textbf{Индексы ускорили время в} 0,7 раз\\
+
+\paragraph{Эксперимент №8}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5 ORDER BY t1.c}\\
+\textbf{Результат}: \textit{create index index_t1_c on t1(c);}, \textit{create index index_t2_ab on t2(a, b);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00029825\\
+\textbf{Время выполнения без индекса}: 1.06560425\\
+\textbf{Индексы ускорили время в} 3572 раз\\
+
+\paragraph{Эксперимент №9}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 5 ORDER BY t2.c}\\
+\textbf{Результат}: \textit{create index index_t1_b on t1(b);}, \textit{create index index_t2_a on t2(a)}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 6.11766875\\
+\textbf{Время выполнения без индекса}: 15.75222000\\
+\textbf{Индексы ускорили время в} 2,5 раз\\
+
+\paragraph{Эксперимент №10}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b > 5}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}, \textit{create index index_t2_b on t2(b);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00028800\\
+\textbf{Время выполнения без индекса}: 0.00140550\\
+\textbf{Индексы ускорили время в} 4,8 раз\\
+
+\paragraph{Эксперимент №11}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 RIGHT JOIN t2 ON t1.a = t2.a ORDER BY t1.с}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 12.80716150\\
+\textbf{Время выполнения без индекса}: 33.75347400\\
+\textbf{Индексы ускорили время в} 2,6 раз\\
+
+\paragraph{Эксперимент №12}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 RIGHT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t2.c}\\
+\textbf{Результат}: \textit{create index index_t1_ab on t1(a, b);}, \textit{create index index_t2_c on t2(c);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00044925\\
+\textbf{Время выполнения без индекса}: 1.00510150\\
+\textbf{Индексы ускорили время в} 2237 раз\\
+
+\paragraph{Эксперимент №13}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 RIGHT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}, \textit{create index index_t2_b on t2(b);}\\
+\textbf{Используется индекс}: -\\
+\textbf{Время выполнения с индексом}: 0.00028650\\
+\textbf{Время выполнения без индекса}: 0.00040375\\
+\textbf{Индексы ускорили время в} 1,4 раз\\
+
+\paragraph{Эксперимент №14}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 RIGHT JOIN t2 ON t1.a = t2.a WHERE t1.b > 5 ORDER BY t1.c}\\
+\textbf{Результат}: \textit{create index index_t1_cb on t1(c, b);}, \textit{create index index_t2_a on t2(a);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00106175\\
+\textbf{Время выполнения без индекса}: 5.79531800\\
+\textbf{Индексы ускорили время в} 5458 раз\\
+
+\paragraph{Эксперимент №15}\\
+\textbf{Запрос}: \textit{SELECT * FROM t1 RIGHT JOIN t2 ON t1.a = t2.a WHERE t2.b > 5 ORDER BY t2.c}\\
+\textbf{Результат}: \textit{create index index_t1_a on t1(a);}, \textit{create index index_t2_cb on t2(c, b);}\\
+\textbf{Используется индекс}: да\\
+\textbf{Время выполнения с индексом}: 0.00102675\\
+\textbf{Время выполнения без индекса}: 16.35171300\\
+\textbf{Индексы ускорили время в} 15925 раз\\
+
+
+\section{Выводы}
+
+В каждом из проведенных экспериментов СУБД MySQL использовала индексы, предложенные разработанным ПО. 
+
+Если собрать в таблицу \ref{table:list_experiments_result} результаты анализа времени выполнения запросов, то можно увидеть, что построенные индексы ускорили время выпонения запросов в 87\% экспериментов, при этом в 47\% экспериментов, ускорение времени выполнения запроса было больше, чем на порядок (в среднем в 4777 раз). Однако, в некоторых экспериментах (13\% экспериментов) выйгрыша во времени не произошло, что было ожидаемо.
+
+
+\begin{table}[h]
+\caption{Результаты экспериментов}\label{table:list_experiments_result}.
+\medskip
+\begin{tabular}{|p{6cm}|l|l|l|}
+\hline
+Результат & номера экспериментов & кол-во & \%\\
+\hline
+Индексы уменьшили время больше, чем на порядок & 2, 3, 5, 8, 12, 14, 15 & 7 & 47\\\hline
+Индексы уменьшили время меньше, чем на порядок & 1, 6, 9, 10, 11, 13 & 6& 40 \\\hline
+Индексы увеличили время меньше, чем на порядок & 4, 7 & 2& 13\\\hline
+Индексы увеличили время больше, чем на порядок & - & 0& 0\\\hline
+
+\end{tabular}
+\end{table}

@@ -1,6 +1,24 @@
 \subsection{Построение индекса для простого запроса}
+\label{section:simple-index}
 
-Для того, чтобы автоматизировать процесс построения индекса, рассмотренные в разделе \ref{section:b-tree-indexes-innodb}, необходимо исследовать в каких случаях они могут применяться. Рассмотрим примеры использования индексов для простых запросов (по одной таблице).
+Для того, чтобы автоматизировать процесс построения индексов, рассмотренных в разделе \ref{section:b-tree-indexes-innodb}, необходимо исследовать, в каких случаях они могут применяться. Рассмотрим примеры использования индексов для \textit{простых запросов}.
+
+Под \textit{простым запросом} будем понимать запросы, вида листинг \ref{view-simple-query}.
+
+\begin{lstlisting}[language=sql, caption={Вид простого запроса},label=view-simple-query]
+SELECT * FROM
+t2  [WHERE where_definition]
+    [ORDER BY col_name [ASC | DESC]]
+
+where_definition:
+    where_expression or 
+    where_expression [AND] where_expression 
+    
+where_expression:
+    column_name [> | >= | = | <> | <= | < ] constant or
+    column_name LIKE constant or 
+    where_definition   
+\end{lstlisting}
 
 
 \paragraph{Индексы для WHERE}
@@ -13,7 +31,8 @@ WHERE last_name = ”Пушкин”
     AND dob = 1799
 \end{lstlisting}
 
-Рассмотрим работу индексов на примере индекса \textit{INDEX $\equiv$ (a, b, c)}, где \textit{a, b} - числа, \textit{c} - строка.
+Рассмотрим работу индексов на примере индекса \\
+\textit{INDEX $\equiv$ (a, b, c)}, где \textit{a, b} - числа, \textit{c} - строка.
 
 \begin{enumerate}
 \item \textit{a = 5 AND b = 10 AND c="Hello world"} \\  \textit{INDEX} применяется полностью

@@ -1,5 +1,7 @@
 \chapter{Аналитический раздел}
 
+В данном разделе проводится обзор современных СУБД и анализ их инструментов для управления индексами.
+
 \section{Современные СУБД}
 
 Рассмотрим самые популярные СУБД. \ref{table:list_dbms}
@@ -69,11 +71,11 @@ Percona Server & 2006 & да & Percona\\
 \end{tabular}
 \end{table}
 
+\section{Выводы}
+
 Из результатов проведенного анализа видно, что в одной из самых популярных СУБД MySQL отсутствует возможность получения отчетов о рекомендациях по созданию индексов, что становится причиной отсутствия в данной СУБД инструмента по автоматизированному управлению индексами (создание, применение, удаление).
 
-На основе выполненного анализа обоснована необходимость разработки нового инструмента для рекомендации создания индексов для СУБД MySQL, что подтверждается многочисленными вопросами о поиске данного инструмента и ответами о его отсутствии. \cite{stackoverflow.com:as_mssql_tuning_advisor,stackoverflow.com:automatic-index-creation,stackoverflow.com:help-me-optimise-my-queries-and-index-settings,stackoverflow.com:auto-build-indexes,experts-exchange.com:as_engine_tuning_advisor} 
-
-\section{Решение о разработке инструмента для СУБД MySQL}
+На основе выполненного анализа обоснована необходимость разработки нового \nom{ПО}{Програмное обеспечение} для рекомендации создания индексов для СУБД MySQL, что подтверждается многочисленными вопросами о поиске данного инструмента и ответами о его отсутствии. \cite{stackoverflow.com:as_mssql_tuning_advisor,stackoverflow.com:automatic-index-creation,stackoverflow.com:help-me-optimise-my-queries-and-index-settings,stackoverflow.com:auto-build-indexes,experts-exchange.com:as_engine_tuning_advisor} 
 
 Для процесса разработки такого инструмента необходимо учитывать, что:
 \begin{enumerate}

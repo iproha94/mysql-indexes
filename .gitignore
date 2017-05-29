@@ -1,3 +1,7 @@
 .idea/
 __pycache__
 mysql-rpz-annotated.pdf
+*.bbl
+*.nlo
+*.nls
+
