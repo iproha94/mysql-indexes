@@ -57,7 +57,7 @@
 \end{enumerate}
 
 \subsection{Выражение блока ORDER BY}
-Класс \textit{Выражение блока ORDER BY} представляет выражение блока ORDER BY, где указываются поле сортировки и направление сортировки.
+Класс \textit{Выражение блока ORDER BY} представляет выражение блока ORDER BY, где указывается поле сортировки и направление сортировки.
 
 Атрибуты:
 \begin{enumerate}
@@ -81,7 +81,7 @@
 Методы:
 \begin{enumerate}
 \item \textit{delete_fields([fields])} - удалить из всех атрибутов объекта \textit{индекс} поля, указанные в передаваемом массиве,
-\item \textit{sql(): строка} - получить SQL строку создания индекса, при этом поля будут из \textit{where_eq_fields}, \textit{order_by_fields}, \textit{where_not_eq_fields} в порядке перечисления и с учетом правил из раздела \ref{section:simple-index} 
+\item \textit{sql(): строка} - получить SQL строку создания индекса, при этом поля будут из \textit{where_eq_fields}, \textit{order_by_fields}, \textit{where_not_eq_fields} в порядке перечисления и с учетом правил из пункта \ref{section:simple-index} 
 \end{enumerate}
 
 
@@ -91,8 +91,8 @@
 Атрибуты:
 \begin{enumerate}
 \item \textit{sql_query} - строка с SQL запросом,
-\item \textit{table_name} - имя таблицы из запроса,
-\item \textit{columns_name} - имена колонок таблицы из запроса,
+\item \textit{table_name} - имя таблицы,
+\item \textit{columns_name} - имена колонок таблицы,
 \item \textit{where} - массив объектов класса \textit{условное выражение},
 \item \textit{order_by} - массив объектов класса \textit{выражение блока ORDER BY}.
 \end{enumerate}
@@ -107,7 +107,7 @@
 	\item \textit{order_by}
 	\end{enumerate}
 
-\item \textit{get_index(): index} - создать и вернуть объект класса \textit{индекс} с помощью правил из раздела \ref{section:simple-index}
+\item \textit{get_index(): index} - создать и вернуть объект класса \textit{индекс} с помощью правил из пункта \ref{section:simple-index}
 \end{enumerate}
 
 
@@ -117,8 +117,8 @@
 Атрибуты:
 \begin{enumerate}
 \item \textit{sql_query} - строка с SQL запросом,
-\item \textit{tables_name} - массив из двух элементов-имён таблиц из запроса,
-\item \textit{columns_name} - массив из двух элементов-массивов имён колонок таблиц из запроса,
+\item \textit{tables_name} - массив из двух элементов-имён таблиц,
+\item \textit{columns_name} - массив из двух элементов-массивов имён колонок таблиц,
 \item \textit{join_type} - тип соединения таблиц \{inner | left | right\}
 \item \textit{on} - массив объектов класса \textit{выражение блока ON},
 \item \textit{where} - массив объектов класса \textit{условное выражение},
@@ -128,7 +128,7 @@
 Методы:
 \begin{enumerate}
 \item \textit{init_from_sql(query)} - инициировать объект из SQL строки,
-\item \textit{get_optimization_join(): join_type} - получить тип join, который будет использован оптимизатором MySQL (см. раздел \ref{section:fullscan}),
+\item \textit{get_optimization_join(): join_type} - получить тип join, который будет использован оптимизатором MySQL, что описывается в пункте \ref{section:fullscan},
 \item \textit{get_fullscan_table(): table_number} - определить по какой таблице будет осуществлено полное сканирование,
 \item \textit{get_simple_queries(): simple_query_1, simple_query_2} - разбить запрос на два простых подзапоса,
 \item \textit{get_indexes(): [indexes]} - вернуть индексы этого запроса.
@@ -136,11 +136,11 @@
 
 \subsection{Диаграмма классов}
 
-Выделенные сущности можно представить на диаграмме классов на рисунке \ref{img:diag-class}
+Выделенные сущности можно отобразить на диаграмме классов, которая представлена на рисунке \ref{img:diag-class}
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[scale=0.7]{diag-class.png}
+  \includegraphics[scale=0.5]{diag-class.png}
   \caption{Диаграмма классов}
   \label{img:diag-class}
 \end{figure}

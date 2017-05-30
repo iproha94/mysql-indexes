@@ -24,9 +24,9 @@
 \begin{enumerate}
 \item подготовить входной файл с SQL запросами, для которых необходимо построить индексы. Каждый SQL запрос должен быть на одной строке, и заканчиваться переводом строки. Каждый знак сравнения должен быть обрамлен пробелами. 
 
-\item запустить скрипт \textit{index_advisor} с указанием пути входного файла (например \ref{example-input-file})\\ \textit{python3 index_advisor.py example.sql}
+\item запустить скрипт \textit{index_advisor} с указанием пути входного файла, пример на рисунке \ref{example-input-file}\\ \textit{python3 index_advisor.py example.sql}
 
-\item результаты работы программы будут в сгенерированном выходном файле (например \ref{example-output-file}). В нем для каждого успешно считанного SQL запроса будут сгенерированы SQL строки с созданием рекомендуемого индекса.
+\item результаты работы программы будут в сгенерированном выходном файле, пример на рисунке \ref{example-output-file}. В нем, для каждого успешно считанного SQL запроса, будут сгенерированы SQL строки для создания рекомендуемого индекса.
 \end{enumerate}
 
 
@@ -86,7 +86,7 @@ CREATE INDEX index_t_bacd t(b, a, c, d);
 \paragraph{Процесс использования ПО другими приложениями}
 
 \begin{enumerate}
-\item запустить скрипт \textit{simple_query} или \textit{join_query}, первым аргументом передав строку с простым или сложным SQL запросом соответственно. Например \ref{img:example_simple_query}, \ref{img:example_join_query} :\\
+\item запустить скрипт \textit{simple_query} или \textit{join_query}, первым аргументом передав строку с простым или сложным SQL запросом соответственно. Примеры представлены на рисунках \ref{img:example_simple_query}, \ref{img:example_join_query} :\\
 \textit{python3 simple_query.py "select * from t where a = 5 and b > 1"} \\
 \textit{python3 join_query.py "select * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c"}
 
