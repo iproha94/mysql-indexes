@@ -1,0 +1,10 @@
+select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b > 1 AND t2.c = 5;
+select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t1.b = 5000 AND t1.c > 3 ORDER BY t2.c , t2.d;
+select * FROM t1 LEFT JOIN t2 ON t1.a = t2.a WHERE t2.b = 5000 AND t2.c > 3 ORDER BY t2.c, t2.d;
+select * FROM t1 LEFT JOIN t2 ON t2.a = t1.a ORDER BY t2.b;
+select * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c;
+select * from t where a = 5 and b > 1;
+select * from t where a = 5 and c = 5;
+select * from t where a = 5 and c > 3 and b = 5000;
+select * from t where a = 5;
+select * from t where b = 5 and a = 5 and c > 3 order by c, d;

@@ -12,3 +12,18 @@ t2(a);
 
 "select * FROM t1 INNER JOIN t2 ON t1.a = t2.a WHERE t1.b = 5 ORDER BY t1.c"
 t1(b, c); t2(a);
+
+"select * from t where a = 5 and b > 1"
+t(a, b)
+
+"select * from t where a = 5 and c = 5"
+t(a, c)
+
+"select * from t where a = 5 and c > 3 and b = 5000"
+t(a, b, c)
+
+"select * from t where a = 5"
+t(a)
+
+"select * from t where b = 5 and a = 5 and c > 3 order by c, d"
+t(b, a, c, d)
